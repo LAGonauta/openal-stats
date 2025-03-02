@@ -105,6 +105,9 @@ pub enum Stats {
     alGetBufferi,
     alGetBuffer3i,
     alGetBufferiv,
+    // for custom extensions, such as XRAM
+    CustomAlExtension(String),
+    CustomAlcExtension(String)
 }
 
 static INIT: Once = Once::new();
@@ -124,7 +127,6 @@ pub fn init() {
                         stats.insert(stat, 1);
                     },
                 }
-
                 
                 println!("current stats: {:?}", stats);
             }
