@@ -1,6 +1,17 @@
 #![allow(non_snake_case)]
 
-use crate::{definitions::*, DECL_THUNK};
+use std::ffi::c_void;
+
+use crate::{al_api::api, definitions::*, DECL_THUNK};
+
+#[unsafe(no_mangle)]
+pub extern "C" fn alGetProcAddress(fname: *const ALchar) -> *mut c_void {
+    _ = crate::stats_processor::STATS_SEND.send(crate::stats_processor::Stats::alGetProcAddress);
+    // TODO: wrap the return function of alGetProcAddress so we can get their stats
+    unsafe {
+        api.alGetProcAddress(fname)
+    }
+}
 
 DECL_THUNK!{
     alDopplerFactor(value: ALfloat) -> (),
@@ -21,7 +32,6 @@ DECL_THUNK!{
     alGetDouble(param: ALenum) -> ALdouble,
     alGetError() -> ALenum,
     alIsExtensionPresent(extname: *const ALchar) -> ALboolean,
-    alGetProcAddress(fname: *const ALchar) -> *mut ::std::os::raw::c_void,
     alGetEnumValue(ename: *const ALchar) -> ALenum,
     alListenerf(param: ALenum, value: ALfloat) -> (),
     alListener3f(param: ALenum, value1: ALfloat, value2: ALfloat, value3: ALfloat) -> (),

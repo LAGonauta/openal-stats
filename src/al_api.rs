@@ -120,7 +120,7 @@ al_api! {
 	alGetDouble: unsafe extern "C" fn(param: ALenum) -> ALdouble,
 	alGetError: unsafe extern "C" fn() -> ALenum,
 	alIsExtensionPresent: unsafe extern "C" fn(extname: *const ALchar) -> ALboolean,
-	alGetProcAddress: unsafe extern "C" fn(fname: *const ALchar) -> *mut ::std::os::raw::c_void,
+	alGetProcAddress: unsafe extern "C" fn(fname: *const ALchar) -> *mut std::ffi::c_void,
 	alGetEnumValue: unsafe extern "C" fn(ename: *const ALchar) -> ALenum,
 	alListenerf: unsafe extern "C" fn(param: ALenum, value: ALfloat) -> (),
 	alListener3f: unsafe extern "C" fn(param: ALenum, value1: ALfloat, value2: ALfloat, value3: ALfloat) -> (),
