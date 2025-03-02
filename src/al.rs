@@ -1,7 +1,8 @@
 #![allow(non_snake_case)]
 
-use crate::{definitions::{ALsizei, ALuint}, stats_processor::init};
+use crate::{definitions::{ALCcontext, ALsizei, ALuint, ALvoid}, DECL_THUNK};
 
-#[unsafe(no_mangle)]
-pub extern "C" fn alGenSources(n: ALsizei, sources: *mut ALuint) {
+DECL_THUNK!{
+    alcDestroyContext(ctx: *mut ALCcontext) -> ALvoid,
+    alGenSources(n: ALsizei, sources: *mut ALuint) -> ALvoid,
 }

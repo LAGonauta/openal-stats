@@ -14,7 +14,7 @@ pub(crate) type ALsizei = c_int;
 pub(crate) type ALenum = c_int;
 pub(crate) type ALfloat = c_float;
 pub(crate) type ALdouble = c_double;
-
+pub(crate) type ALvoid = c_void;
 
 pub(crate) type ALCdevice = c_void;
 pub(crate) type ALCcontext = c_void;

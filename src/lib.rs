@@ -4,7 +4,7 @@ mod definitions;
 mod al;
 mod alc;
 mod stats_processor;
-
+mod macros;
 
 pub fn add(left: u64, right: u64) -> u64 {
     left + right
