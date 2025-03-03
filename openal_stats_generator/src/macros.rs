@@ -6,7 +6,7 @@ macro_rules! DECL_THUNK {
         $(
             #[unsafe(no_mangle)]
             pub unsafe extern "C" fn $sym($($param: $param_ty),*) -> $ret_ty {
-                _ = crate::stats_processor::STATS_SEND.send(openal_stats_common::Stats::$sym);
+                _ = crate::stats_generator::STATS_SEND.send(openal_stats_common::Stats::$sym);
 
                 unsafe {
                     crate::al_api::api.$sym($($param),*)

@@ -2,12 +2,12 @@ use std::ffi::c_void;
 
 use openal_stats_common::Stats;
 
-use crate::{al_api::api, definitions::*, stats_processor::init, DECL_THUNK};
+use crate::{al_api::api, definitions::*, stats_generator::init, DECL_THUNK};
 
 #[unsafe(no_mangle)]
 pub extern "C" fn alcOpenDevice(device_name: *const ALCchar) -> *mut ALCdevice {
     init();
-    _ = crate::stats_processor::STATS_SEND.send(Stats::alcOpenDevice);
+    _ = crate::stats_generator::STATS_SEND.send(Stats::alcOpenDevice);
     unsafe {
         api.alcOpenDevice(device_name)
     }
@@ -16,7 +16,7 @@ pub extern "C" fn alcOpenDevice(device_name: *const ALCchar) -> *mut ALCdevice {
 #[unsafe(no_mangle)]
 pub extern "C" fn alcGetProcAddress(device: *mut ALCdevice, funcname: *const ALCchar) -> *mut c_void {
     init();
-    _ = crate::stats_processor::STATS_SEND.send(Stats::alcGetProcAddress);
+    _ = crate::stats_generator::STATS_SEND.send(Stats::alcGetProcAddress);
     // TODO: wrap the return function of alcGetProcAddress so we can get their stats
     unsafe {
         api.alcGetProcAddress(device, funcname)

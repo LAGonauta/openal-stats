@@ -3,7 +3,7 @@
 mod definitions;
 mod al;
 mod alc;
-mod stats_processor;
+mod stats_generator;
 mod macros;
 mod al_api;
 
