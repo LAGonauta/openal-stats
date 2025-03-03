@@ -1,14 +1,3 @@
-[package]
-name = "openal-stats"
-version = "0.1.0"
-edition = "2024"
-
-[lib]
-name = "OpenAL32"
-crate-type = ["cdylib"]
-
-[dependencies]
-flume = "0.11.1"
-lazy_static = "1.5.0"
-libloading = "0.8.6"
-ouroboros = "0.18.5"
+[workspace]
+resolver = "3"
+members = ["openal_stats_generator", "openal_stats_viewer"]

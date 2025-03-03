@@ -1,0 +1,17 @@
+[package]
+name = "openal-stats"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "OpenAL32"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = "1.0.96"
+flume = "0.11.1"
+interprocess = "2.2.2"
+lazy_static = "1.5.0"
+libloading = "0.8.6"
+ouroboros = "0.18.5"

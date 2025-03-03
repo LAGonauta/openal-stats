@@ -1,5 +1,6 @@
-use std::{collections::HashMap, sync::Once, thread::{self}};
+use std::{collections::HashMap, io::{BufRead, BufReader, Write}, sync::Once, thread::{self}};
 
+use interprocess::local_socket::{prelude::* ,GenericFilePath, GenericNamespaced, NameType, Stream, ToFsName, ToNsName};
 use lazy_static::lazy_static;
 
 lazy_static!{
@@ -115,10 +116,28 @@ static INIT: Once = Once::new();
 pub fn init() {
     INIT.call_once(|| {
         thread::spawn(|| {
+            let socket_name = "openal_stats.sock";
+            let name = if GenericNamespaced::is_supported() {
+                socket_name.to_ns_name::<GenericNamespaced>()?
+            } else {
+                ("/tmp/".to_owned()+socket_name).to_fs_name::<GenericFilePath>()?
+            };
+
+            let mut buffer = String::with_capacity(128);
+
+            let conn = Stream::connect(name)?;
+            let mut conn = BufReader::new(conn);
+            conn.get_mut().write_all(b"Hello from client!\n")?;
+            conn.read_line(&mut buffer)?;
+
+            // Print out the result, getting the newline for free!
+            print!("Server answered: {buffer}");
+            
             let mut stats: HashMap<Stats, i32> = HashMap::new();
             for stat in STATS_RECV.iter() {
                 println!("received! {:?}", stat);
 
+                // TODO: connect to a web server listening in an unix domain socket and forward the messages
                 match stats.get_mut(&stat) {
                     Some(v) => {
                         *v += 1;
@@ -130,6 +149,8 @@ pub fn init() {
                 
                 println!("current stats: {:?}", stats);
             }
+
+            anyhow::Ok(())
         });
     });    
 }
