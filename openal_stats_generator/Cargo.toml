@@ -11,7 +11,9 @@ crate-type = ["cdylib"]
 [dependencies]
 anyhow = "1.0.96"
 flume = "0.11.1"
-interprocess = "2.2.2"
+interprocess = { version = "2.2.2", features = ["tokio"] }
 lazy_static = "1.5.0"
 libloading = "0.8.6"
 ouroboros = "0.18.5"
+tokio = { version = "1.43.0", features = ["full"] }
+openal_stats_common = { path = "../openal_stats_common"}

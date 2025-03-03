@@ -2,11 +2,13 @@
 
 use std::ffi::c_void;
 
+use openal_stats_common::Stats;
+
 use crate::{al_api::api, definitions::*, DECL_THUNK};
 
 #[unsafe(no_mangle)]
 pub extern "C" fn alGetProcAddress(fname: *const ALchar) -> *mut c_void {
-    _ = crate::stats_processor::STATS_SEND.send(crate::stats_processor::Stats::alGetProcAddress);
+    _ = crate::stats_processor::STATS_SEND.send(Stats::alGetProcAddress);
     // TODO: wrap the return function of alGetProcAddress so we can get their stats
     unsafe {
         api.alGetProcAddress(fname)

@@ -1,8 +1,9 @@
-use std::io;
+use std::{collections::HashMap, io, str::FromStr};
 
 use anyhow::Context;
 use interprocess::local_socket::{tokio::Stream, traits::tokio::Listener, GenericNamespaced, ListenerOptions, ToNsName};
-use tokio::{io::{AsyncBufReadExt, AsyncWriteExt, BufReader}, try_join};
+use openal_stats_common::Stats;
+use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio_util::sync::CancellationToken;
 
 // TODO: add proper coloured logging
@@ -57,21 +58,36 @@ async fn main() -> anyhow::Result<()> {
 
 async fn handle_conn(conn: Stream) -> io::Result<()> {
     let mut recver = BufReader::new(&conn);
-    let mut sender = &conn;
+    //let mut sender = &conn;
 
     // Allocate a sizeable buffer for receiving. This size should be big enough and easy to
     // find for the allocator.
     let mut buffer = String::with_capacity(128);
 
-    // Describe the send operation as sending our whole message.
-    let send = sender.write_all(b"Hello from server!\n");
+    let mut stats: HashMap<Stats, i32> = HashMap::new();
     // Describe the receive operation as receiving a line into our big buffer.
-    let recv = recver.read_line(&mut buffer);
+    while let Ok(r) = recver.read_line(&mut buffer).await {
+        if r == 0 {
+            // EOF
+            break;
+        }
 
-    // Run both operations concurrently.
-    try_join!(recv, send)?;
+        _ = buffer.truncate(r);
+        if let Ok(stat) = Stats::from_str(buffer.trim()) {
+            match stats.get_mut(&stat) {
+                Some(v) => {
+                    *v += 1;
+                },
+                None => {
+                    stats.insert(stat.clone(), 1);
+                },
+            }
+    
+            println!("(ASYNC) Got {:?}, current stats: {:?}", stat, stats);
+        }
 
-    // Produce our output!
-    println!("Client answered: {}", buffer.trim());
+        buffer.truncate(0);
+    }
+
     Ok(())
 }
