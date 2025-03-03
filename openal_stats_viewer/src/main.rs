@@ -1,4 +1,4 @@
-use std::{collections::HashMap, io, str::FromStr};
+use std::{collections::HashMap, io};
 
 use anyhow::Context;
 use interprocess::local_socket::{tokio::Stream, traits::tokio::Listener, GenericNamespaced, ListenerOptions, ToNsName};
@@ -60,20 +60,19 @@ async fn handle_conn(conn: Stream) -> io::Result<()> {
     let mut recver = BufReader::new(&conn);
     //let mut sender = &conn;
 
-    // Allocate a sizeable buffer for receiving. This size should be big enough and easy to
-    // find for the allocator.
-    let mut buffer = String::with_capacity(128);
+    let mut buffer = Vec::new();
+    buffer.resize(4096, 0);
 
     let mut stats: HashMap<Stats, i32> = HashMap::new();
     // Describe the receive operation as receiving a line into our big buffer.
-    while let Ok(r) = recver.read_line(&mut buffer).await {
+    while let Ok(r) = recver.read_until(0, &mut buffer).await {
         if r == 0 {
             // EOF
             break;
         }
 
         _ = buffer.truncate(r);
-        if let Ok(stat) = Stats::from_str(buffer.trim()) {
+        if let Ok(stat) = postcard::from_bytes_cobs(&mut buffer) {
             match stats.get_mut(&stat) {
                 Some(v) => {
                     *v += 1;

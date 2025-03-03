@@ -1,7 +1,8 @@
-use strum::{Display, EnumString};
+use serde::{Deserialize, Serialize};
+use strum::Display;
 
 #[allow(non_camel_case_types, dead_code)]
-#[derive(Debug, PartialEq, Eq, Hash, Clone, EnumString, Display)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Display, Serialize, Deserialize)]
 pub enum Stats {
     Ping,
     alcOpenDevice,

@@ -55,12 +55,13 @@ fn connected_stats() -> anyhow::Result<()> {
 
     let (recver, mut sender) = conn.split();
     let _recver = BufReader::new(recver);
-
     
     while let Ok(stat) = STATS_RECV.recv() {
-        if let Err(e) = sender.write_all(format!("{}\n", stat).as_bytes()) {
-            println!("(ASYNC) Unable to send data to server: {}", e);
-            break;
+        if let Ok(s) = postcard::to_stdvec_cobs(&stat) {
+            if let Err(e) = sender.write_all(&s) {
+                println!("(ASYNC) Unable to send data to server: {}", e);
+                break;
+            }
         }
     }
 
