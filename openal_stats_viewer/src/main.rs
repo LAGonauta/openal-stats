@@ -40,6 +40,7 @@ async fn main() -> anyhow::Result<()> {
                                 continue;
                             }
                         };
+                        eprintln!("Client connected");
         
                         // Spawn new parallel asynchronous tasks onto the Tokio runtime and hand the connection
                         // over to them so that multiple clients could be processed simultaneously in a
@@ -76,29 +77,71 @@ async fn handle_conn(conn: Stream) -> io::Result<()> {
     let mut recver = BufReader::new(&conn);
     //let mut sender = &conn;
 
-    let mut buffer = Vec::new();
-    buffer.resize(4096, 0);
+    let mut buffer = Vec::with_capacity(4096);
 
+    let mut sources = 0;
+    let mut sources_playing = 0;
+    let mut executable = "Unknown".to_owned();
     let mut stats: HashMap<Stats, i32> = HashMap::new();
     // Describe the receive operation as receiving a line into our big buffer.
-    while let Ok(r) = recver.read_until(0, &mut buffer).await {
+    while let Ok(r) = recver.read_until(0x00, &mut buffer).await {
         if r == 0 {
             // EOF
             break;
         }
 
         _ = buffer.truncate(r);
-        if let Ok(stat) = postcard::from_bytes_cobs(&mut buffer) {
-            match stats.get_mut(&stat) {
-                Some(v) => {
-                    *v += 1;
-                },
-                None => {
-                    stats.insert(stat.clone(), 1);
-                },
+
+        match postcard::from_bytes_cobs(&mut buffer) {
+            Ok(stat) => {
+                match stat {                    
+                    Stats::Exe { ref name } => {
+                        executable = name.to_owned();
+                    },
+                    _ => {
+                        match stat {
+                            Stats::alGenSources { n } => {
+                                sources += n;
+                                println!("'{}' current sources: {}", executable, sources);
+                            },
+                            Stats::alDeleteSources { n } => {
+                                sources -= n;
+                                println!("'{}' current sources: {}", executable, sources);
+                            },
+                            Stats::alSourcePlay => {
+                                sources_playing += 1;
+                                println!("'{}' playing sources: {}", executable, sources_playing);
+                            },
+                            Stats::alSourceStop => {
+                                sources_playing -= 1;
+                                println!("'{}' playing sources: {}", executable, sources_playing);
+                            }
+                            Stats::alSourceStopv => {
+                                eprintln!("'{}' uses stopv!", executable);
+                            },
+                            Stats::alSourcePlayv => {
+                                eprintln!("'{}' uses playv!", executable);
+                            },
+                            _ => {}
+                        }
+
+                        match stats.get_mut(&stat) {
+                            Some(v) => {
+                                *v += 1;
+                            },
+                            None => {
+                                stats.insert(stat.clone(), 1);
+                            },
+                        }
+                    }
+                }
+               
+                //println!("Got {:?}, '{}' current stats: {:?}", stat, executable, stats);
+                //println!("Got {:?}, '{}' current stats: {:?}", stat, executable, stats);
             }
-    
-            println!("(ASYNC) Got {:?}, current stats: {:?}", stat, stats);
+            Err(e) => {
+                println!("(ASYNC) Unable to deserialize due to '{}'", e);
+            },
         }
 
         buffer.truncate(0);

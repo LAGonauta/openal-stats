@@ -1,6 +1,6 @@
-use std::{collections::HashMap, io::{BufReader, Write}, sync::Once, thread::{self}};
+use std::{env, io::{BufReader, Write}, ops::ControlFlow, sync::Once, thread::{self}};
 
-use interprocess::local_socket::{prelude::*, Stream, GenericFilePath, GenericNamespaced};
+use interprocess::local_socket::{prelude::*, GenericFilePath, GenericNamespaced, SendHalf, Stream};
 use openal_stats_common::Stats;
 use lazy_static::lazy_static;
 
@@ -14,27 +14,12 @@ static INIT: Once = Once::new();
 
 pub fn init() {
     INIT.call_once(|| {
-        thread::spawn(|| {
-            
+        thread::spawn(|| {        
             if let Err(e) = connected_stats() {
                 eprintln!("Unable to connect to server: '{}'", e);
                 
-                // fallback
-                let mut stats: HashMap<Stats, i32> = HashMap::new();
-                for stat in STATS_RECV.iter() {
-                    println!("received! {:?}", stat);
-    
-                    match stats.get_mut(&stat) {
-                        Some(v) => {
-                            *v += 1;
-                        },
-                        None => {
-                            stats.insert(stat.clone(), 1);
-                        },
-                    }
-                    
-                    println!("(SYNC) Got {:?}, current stats: {:?}", stat, stats);
-                }
+                // fallback to not accumulate data in the channel
+                for _ in STATS_RECV.iter() {}
             }
 
 
@@ -58,15 +43,29 @@ fn connected_stats() -> anyhow::Result<()> {
 
     let mut buffer = Vec::new();
     buffer.resize(4096, 0);
+    
+    let exe = env::current_exe()
+        .ok()
+        .and_then(|p| p.file_name().and_then(|f| f.to_str().map(|s| s.to_owned())))
+        .unwrap_or("Unknown".to_owned());
+
+    _ = send_stats(&mut sender, &mut buffer, Stats::Exe { name: exe });
 
     while let Ok(stat) = STATS_RECV.recv() {
-        if let Ok(s) = postcard::to_slice_cobs(&stat, &mut buffer) {
-            if let Err(e) = sender.write_all(&s) {
-                println!("(ASYNC) Unable to send data to server: {}", e);
-                break;
-            }
+        if let ControlFlow::Break(_) = send_stats(&mut sender, &mut buffer, stat) {
+            break;
         }
     }
 
     anyhow::Ok(())
+}
+
+fn send_stats(sender: &mut SendHalf, buffer: &mut Vec<u8>, stat: Stats) -> ControlFlow<()> {
+    if let Ok(s) = postcard::to_slice_cobs(&stat, buffer) {
+        if let Err(e) = sender.write_all(&s) {
+            println!("(ASYNC) Unable to send data to server: {}", e);
+            return ControlFlow::Break(());
+        }
+    }
+    ControlFlow::Continue(())
 }

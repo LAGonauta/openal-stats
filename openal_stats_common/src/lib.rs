@@ -4,6 +4,7 @@ use strum::Display;
 #[allow(non_camel_case_types, dead_code)]
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Display, Serialize, Deserialize)]
 pub enum Stats {
+    Exe {name: String},
     Ping,
     alcOpenDevice,
     alcGetProcAddress,
@@ -57,8 +58,8 @@ pub enum Stats {
     alGetListeneri,
     alGetListener3i,
     alGetListeneriv,
-    alGenSources,
-    alDeleteSources,
+    alGenSources { n: i32 },
+    alDeleteSources { n: i32 },
     alIsSource,
     alSourcef,
     alSource3f,

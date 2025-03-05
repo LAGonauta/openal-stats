@@ -15,6 +15,21 @@ pub extern "C" fn alGetProcAddress(fname: *const ALchar) -> *mut c_void {
     }
 }
 
+#[unsafe(no_mangle)]
+pub extern "C" fn alGenSources(n: ALsizei, sources: *mut ALuint) {
+    _ = crate::stats_generator::STATS_SEND.send(Stats::alGenSources{n});
+    unsafe {
+        api.alGenSources(n, sources)
+    }
+}
+#[unsafe(no_mangle)]
+pub extern "C" fn alDeleteSources(n: ALsizei, sources: *const ALuint) {
+    _ = crate::stats_generator::STATS_SEND.send(Stats::alDeleteSources{n});
+    unsafe {
+        api.alDeleteSources(n, sources)
+    }
+}
+
 DECL_THUNK!{
     alDopplerFactor(value: ALfloat) -> (),
     alDopplerVelocity(value: ALfloat) -> (),
@@ -47,8 +62,6 @@ DECL_THUNK!{
     alGetListeneri(param: ALenum, value: *mut ALint) -> (),
     alGetListener3i(param: ALenum, value1: *mut ALint, value2: *mut ALint, value3: *mut ALint) -> (),
     alGetListeneriv(param: ALenum, values: *mut ALint) -> (),
-    alGenSources(n: ALsizei, sources: *mut ALuint) -> (),
-    alDeleteSources(n: ALsizei, sources: *const ALuint) -> (),
     alIsSource(source: ALuint) -> ALboolean,
     alSourcef(source: ALuint, param: ALenum, value: ALfloat) -> (),
     alSource3f(source: ALuint, param: ALenum, value1: ALfloat, value2: ALfloat, value3: ALfloat) -> (),
